@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?><sqlb_project><db path="C:/Users/novi/Downloads/myskill ecommerce db.db" readonly="0" foreign_keys="1" case_sensitive_like="0" temp_store="0" wal_autocheckpoint="1000" synchronous="2"/><attached/><window><main_tabs open="structure browser pragmas query" current="3"/></window><tab_structure><column_width id="0" width="300"/><column_width id="1" width="0"/><column_width id="2" width="100"/><column_width id="3" width="1170"/><column_width id="4" width="0"/><expanded_item id="0" parent="1"/><expanded_item id="1" parent="1"/><expanded_item id="2" parent="1"/><expanded_item id="3" parent="1"/></tab_structure><tab_browse><current_table name="4,4:maindemo"/><default_encoding codec=""/><browse_table_settings/></tab_browse><tab_sql><sql name="SQL 1">-- From the ecommerce_event table, write a SQL query to output: 
+-- Total Unique user_session
+-- Min, Max, and Average price
+-- With criteria event_type is view, and brand except apple and samsung
+
+SELECT event_type, brand, COUNT (distinct user_session) unq_session,
+	min (price) cheapest,
+    	max (price) most_exp,
+    	avg(price) average
+FROM ecommerce_event_data e
+WHERE event_type='view' and (brand!='apple' and brand!='samsung')
+GROUP BY brand
+ORDER BY brand;
+
+
+--  From the ecommerce_event table, write a SQL query to output Total Unique product_id . filter brand which start with ‘a’ or ‘k’ letter, and date after ‘2019-10-04’
+SELECT brand, event_date, COUNT (distinct product_id) ttl_prod_id
+FROM ecommerce_event_data e
+WHERE event_date&gt;'2019-10-04' AND (brand like 'a%' OR brand like 'k%')
+GROUP BY brand
+ORDER BY event_date ASC;
+
+--  From the ecommerce_event  table, write a SQL query to output total unique product and total unique user, for every order date. Only show the date above 04 august 2019, and sort the result by the latest date
+SELECT event_type, event_date,
+	COUNT(DISTINCT product_id) ttl_unique_prod,
+	COUNT (DISTINCT user_id) ttl_unique_user
+FROM ecommerce_event_data
+WHERE event_date&gt;'2019-08-04' and event_type='purchase'
+GROUP BY event_date
+ORDER BY event_date DESC;
+
+-- From the question 3, filter only dates that have total_product more than 500
+SELECT event_type, event_date,
+		COUNT(DISTINCT product_id) ttl_unique_prod,
+    	COUNT (DISTINCT user_id) ttl_unique_user,
+    	COUNT(product_id) ttl_prod
+FROM ecommerce_event_data
+WHERE event_date&gt;'2019-08-04'
+GROUP BY event_date
+HAVING ttl_prod&gt;500
+ORDER BY event_date DESC;
+
+-- From the event and user table, which gender has more sessions in october 2019?
+SELECT u.gender, COUNT (DISTINCT e.user_session) ttl_u_session
+FROM ecommerce_event_data e
+JOIN ecommerce_users_data u ON e.user_id=u.user_id
+WHERE e.event_date BETWEEN '2019-10-01' and '2019-10-31'
+GROUP BY u.gender;
+
+-- From the event and user table, is it true that iphone has more dominated by female and samsung dominated by male?
+SELECT gender, brand, count(DISTINCT e.user_id) total_unique_user
+FROM ecommerce_event_data e
+LEFT JOIN ecommerce_users_data u ON e.user_id = u.user_id
+WHERE brand in ('apple', 'samsung')
+GROUP BY gender, brand;
+
+-- From the event and user table, show total user, product, and session, in every ages. Exclude age with  total_user more than 320
+SELECT  u.age,
+	COUNT (DISTINCT e.product_id) ttl_unique_prod,
+    COUNT (DISTINCT e.user_session) ttl_unique_session,
+    COUNT (DISTINCT u.user_id) ttl_user
+FROM ecommerce_event_data e
+JOIN ecommerce_users_data u ON e.user_id=u.user_id
+GROUP BY u.age
+HAVING COUNT (DISTINCT u.user_id) &lt; 320
+ORDER BY age ASC;
+
+-- Calculate the daily revenue and unique users for each date
+SELECT event_date, COUNT(DISTINCT user_id) ttl_buyer, SUM(price) revenue
+FROM ecommerce_event_data
+WHERE event_type='purchase'
+GROUP BY event_date
+ORDER BY event_date;
+
+-- Calculate the daily revenue and unique users for each date for male users
+SELECT e.event_date, COUNT(DISTINCT e.user_id) ttl_buyer, SUM(e.price) revenue
+FROM ecommerce_event_data e
+JOIN ecommerce_users_data u ON e.user_id=u.user_id
+WHERE e.event_type='purchase' AND u.gender='Male'
+GROUP BY event_date
+ORDER BY event_date;
+
+-- Calculate the daily average revenue per user (Revenue/ # users) for date with revenue higher than 3000
+WITH table_revenue
+	AS (
+	SELECT event_date, sum(price) revenue, count(DISTINCT user_id) total_unique_user
+	FROM ecommerce_event_data
+	WHERE event_type = 'purchase'
+	GROUP BY event_date
+	HAVING revenue &gt;= 3000)
+SELECT event_date, revenue/total_unique_user
+from table_revenue
+GROUP BY event_date
+
+
+</sql><current_tab id="0"/></tab_sql></sqlb_project>
